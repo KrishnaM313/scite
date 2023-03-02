@@ -31,7 +31,7 @@ MAX_CLEN = 23
 VOCAB_SIZE = 15539
 CHAR_SIZE = 69
 EXTVEC_DIM = 300
-FLAIR_DIM = 1024
+FLAIR_DIM = 4096
 CHAR_DIM = 30
 NUM_CHAR_CNN_FILTER = 30
 CHAR_CNN_KERNEL_SIZE = 3
@@ -282,16 +282,17 @@ class CausalityExtractor:
         os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda_devices)
         np.random.seed(args.seed)
         rn.seed(args.seed)
-        session_conf = tf.ConfigProto(
+        ##################configproto
+        session_conf = tf.compat.v1.ConfigProto(
             device_count={'CPU': args.cpu_core},
             intra_op_parallelism_threads=args.cpu_core,
             inter_op_parallelism_threads=args.cpu_core,
-            gpu_options=tf.GPUOptions(allow_growth=True
-                                     #per_process_gpu_memory_fraction=0.09
+            gpu_options=tf.compat.v1.GPUOptions(allow_growth=True,
+                                     #per_process_gpu_memory_fraction=0.7
                                      ),
             allow_soft_placement=True)
-        tf.set_random_seed(args.seed)
-        sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+        tf.compat.v1.set_random_seed(args.seed)
+        sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
         K.set_session(sess)
 
     def conv_block(self, x, dilation_rate=1, use_dropout=True, name='1'):
@@ -419,7 +420,7 @@ class CausalityExtractor:
             output = crf(dense)
             loss_func = crf.sparse_loss
 
-        optimizer = optimizers.Nadam(lr=self.lr, clipnorm=args.clip_norm)
+        optimizer = optimizers.Nadam(learning_rate=self.lr, clipnorm=args.clip_norm)
         model = Model(inputs=input_node, outputs=output)
         model.compile(loss=loss_func, optimizer=optimizer)
         return model
@@ -474,7 +475,7 @@ class CausalityExtractor:
                              None, save_path=save_path)
         reduce_lr = ReduceLROnPlateau(
             monitor='loss', factor=0.5, patience=10, verbose=1, cooldown=5, min_lr=0.00005)
-        model.fit_generator(training_generator,
+        model.fit(training_generator,
                             epochs=args.num_epochs,
                             verbose=1,
                             callbacks=[evaluator, reduce_lr],
@@ -482,7 +483,7 @@ class CausalityExtractor:
 
         
 parser = argparse.ArgumentParser()
-parser.add_argument('-fp', '--file_path', type=str, default="your path to /data/", help="")
+parser.add_argument('-fp', '--file_path', type=str, default="C:\\Users\\hjbec\\scite\\data\\", help="")
 parser.add_argument('-s', '--seed', type=int, default=0, help="")
 parser.add_argument('-kf', '--k_fold', type=int, default=0)
 parser.add_argument('-cuda', '--cuda_devices', type=int, default=0)

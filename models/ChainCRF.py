@@ -11,8 +11,9 @@ from keras import backend as K
 from keras import regularizers
 from keras import constraints
 from keras import initializers
-from keras.engine import Layer, InputSpec
-
+#from keras.engine import Layer, InputSpec
+from keras.layers import Layer, InputSpec
+#from keras.engine import InputSpec
 
 def path_energy(y, x, U, b_start=None, b_end=None, mask=None):
     '''Calculates the energy of a tag path y for a given input x (with mask),
@@ -297,19 +298,19 @@ class ChainCRF(Layer):
         self.input_spec = [InputSpec(dtype=K.floatx(),
                                      shape=(None, n_steps, n_classes))]
 
-        self.U = self.add_weight((n_classes, n_classes),
+        self.U = self.add_weight(shape=(n_classes, n_classes),
                                  initializer=self.init,
                                  name='U',
                                  regularizer=self.U_regularizer,
                                  constraint=self.U_constraint)
 
-        self.b_start = self.add_weight((n_classes, ),
+        self.b_start = self.add_weight(shape=(n_classes, ),
                                        initializer='zero',
                                        name='b_start',
                                        regularizer=self.b_start_regularizer,
                                        constraint=self.b_start_constraint)
 
-        self.b_end = self.add_weight((n_classes, ),
+        self.b_end = self.add_weight(shape=(n_classes, ),
                                      initializer='zero',
                                      name='b_end',
                                      regularizer=self.b_end_regularizer,
